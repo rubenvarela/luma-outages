@@ -28,6 +28,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: run program
       env:
-        ghtoken: ${{ secrets.GHTOKEN. }}
+        ghtoken: ${{ secrets.GHTOKEN }}
       run: |
         python main.py
