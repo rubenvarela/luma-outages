@@ -30,5 +30,7 @@ jobs:
     - name: run program
       env:
         ghtoken: ${{ secrets.GHTOKEN }}
+        save_to_disk: 0
+        save_to_github: 1
       run: |
         python main.py
