@@ -1,3 +1,0 @@
-requests
-pygithub
-tzdata; sys_platform == "win32"

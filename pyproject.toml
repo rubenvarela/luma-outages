@@ -1,0 +1,13 @@
+[project]
+name = "luma-outages"
+version = "0.1.0"
+description = "Scrapes LUMA outage data and pushes snapshots to luma-outages-data"
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "pygithub",
+    "tzdata; sys_platform == 'win32'",
+]
+
+[tool.uv]
+package = false
