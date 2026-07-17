@@ -1,5 +1,5 @@
-# This workflow will install Python dependencies, run main.py with Python 3.14
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# This workflow uses uv to install Python dependencies and run main.py.
+# Python version and dependencies are pinned via .python-version and uv.lock.
 
 name: Python application
 
@@ -18,21 +18,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.14
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
       with:
-        python-version: "3.14"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        enable-cache: true
     - name: run program
       env:
         ghtoken: ${{ secrets.GHTOKEN }}
         save_to_disk: 0
         save_to_github: 1
       run: |
-        python main.py
+        uv run main.py
     - name: Record heartbeat
       if: always()
       run: |
