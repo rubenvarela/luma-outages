@@ -42,15 +42,18 @@ path = Path(f'{loc_dt.year}/{loc_dt.month}/{loc_dt.day}/')
 filepath_towns = path.joinpath(f'{loc_dt.strftime(date_format)}.json')
 filepath_clients = path.joinpath(f'{loc_dt.strftime(date_format)}--clients.json')
 
+towns_data = response_towns.json()
+clients_data = response_clients.json()
+
 # If we aren't running in GitHub, we save to disk too
 if not os.environ.get('GITHUB_ACTIONS') and os.environ.get('save_to_disk') == '1':
     path.mkdir(parents=True, exist_ok=True)
 
     with open(filepath_towns, 'w') as fd:
-        json.dump(response_towns.json(), fd)
+        json.dump(towns_data, fd)
 
     with open(filepath_clients, 'w') as fd:
-        json.dump(response_clients.json(), fd)
+        json.dump(clients_data, fd)
 
 if os.environ.get('save_to_github') == '1':
     # Now we write it to GitHub
@@ -61,5 +64,5 @@ if os.environ.get('save_to_github') == '1':
                 token = fd.readline().split('=')[1][1:-2] # split on =, remove quotes with slicing
     g = github.Github(token)
     repo = g.get_repo("rubenvarela/luma-outages-data")
-    repo.create_file(f"{filepath_towns}", message=f"New export created {loc_dt.strftime(date_format)} Towns", content=json.dumps(response_towns.json()), branch="main")
-    repo.create_file(f"{filepath_clients}", message=f"New export created {loc_dt.strftime(date_format)} Clients", content=json.dumps(response_clients.json()), branch="main")
+    repo.create_file(f"{filepath_towns}", message=f"New export created {loc_dt.strftime(date_format)} Towns", content=json.dumps(towns_data), branch="main")
+    repo.create_file(f"{filepath_clients}", message=f"New export created {loc_dt.strftime(date_format)} Clients", content=json.dumps(clients_data), branch="main")
