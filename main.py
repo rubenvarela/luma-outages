@@ -1,7 +1,7 @@
 import requests
 import json
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime, timedelta, UTC
+from zoneinfo import ZoneInfo
 from pathlib import Path
 import github #pygithub
 import os
@@ -29,14 +29,10 @@ json_data = towns
 
 response_towns = requests.post('https://api.miluma.lumapr.com/miluma-outage-api/outage/municipality/towns', headers=headers, json=json_data)
 response_clients = requests.get('https://api.miluma.lumapr.com/miluma-outage-api/outage/regionsWithoutService')
-# date_utc = datetime.utcnow()
-ast = pytz.timezone('America/Puerto_Rico')
+ast = ZoneInfo('America/Puerto_Rico')
 date_format = '%Y-%m-%d %H.%M.%S %Z%z'
 
-utc = pytz.utc
-utc_dt = utc.localize(datetime.utcnow())
-loc_dt = utc_dt.astimezone(ast)
-# print(loc_dt.strftime(date_format))
+loc_dt = datetime.now(UTC).astimezone(ast)
 
 path = Path(f'{loc_dt.year}/{loc_dt.month}/{loc_dt.day}/')
 filepath_towns = path.joinpath(f'{loc_dt.strftime(date_format)}.json')
