@@ -1,6 +1,6 @@
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
 import github #pygithub
@@ -55,6 +55,48 @@ if not os.environ.get('GITHUB_ACTIONS') and os.environ.get('save_to_disk') == '1
     with open(filepath_clients, 'w') as fd:
         json.dump(clients_data, fd)
 
+
+def _day_files(repo, dt, is_towns):
+    """List this day's files of one type (towns or clients), oldest to newest."""
+    try:
+        contents = repo.get_contents(f'{dt.year}/{dt.month}/{dt.day}')
+    except github.UnknownObjectException:
+        return []
+    if is_towns:
+        matches = [c for c in contents if c.name.endswith('.json') and not c.name.endswith('--clients.json')]
+    else:
+        matches = [c for c in contents if c.name.endswith('--clients.json')]
+    return sorted(matches, key=lambda c: c.name)
+
+
+def _check_type(repo, loc_dt, is_towns, new_data):
+    """Compare new_data against the latest snapshot of this type, and check
+    whether the current hour already has an entry of this type."""
+    today_files = _day_files(repo, loc_dt, is_towns)
+    has_entry_this_hour = any(c.name.startswith(loc_dt.strftime('%Y-%m-%d %H.')) for c in today_files)
+
+    latest_file = today_files[-1] if today_files else None
+    if latest_file is None:
+        yesterday_files = _day_files(repo, loc_dt - timedelta(days=1), is_towns)
+        latest_file = yesterday_files[-1] if yesterday_files else None
+
+    unchanged = latest_file is not None and json.loads(latest_file.decoded_content) == new_data
+    return unchanged, has_entry_this_hour
+
+
+def _should_write(repo, loc_dt, towns_data, clients_data):
+    """Towns and clients are written together as a pair. If either is
+    missing a snapshot for the current hour, or either has changed, write
+    both. Only skip when both are already covered for this hour and both
+    are unchanged."""
+    towns_unchanged, towns_has_hour = _check_type(repo, loc_dt, True, towns_data)
+    clients_unchanged, clients_has_hour = _check_type(repo, loc_dt, False, clients_data)
+
+    if towns_unchanged and clients_unchanged and towns_has_hour and clients_has_hour:
+        return False, True
+    return True, (towns_unchanged and clients_unchanged)
+
+
 if os.environ.get('save_to_github') == '1':
     # Now we write it to GitHub
     token = os.environ.get('ghtoken')
@@ -64,5 +106,9 @@ if os.environ.get('save_to_github') == '1':
                 token = fd.readline().split('=')[1][1:-2] # split on =, remove quotes with slicing
     g = github.Github(token)
     repo = g.get_repo("rubenvarela/luma-outages-data")
-    repo.create_file(f"{filepath_towns}", message=f"New export created {loc_dt.strftime(date_format)} Towns", content=json.dumps(towns_data), branch="main")
-    repo.create_file(f"{filepath_clients}", message=f"New export created {loc_dt.strftime(date_format)} Clients", content=json.dumps(clients_data), branch="main")
+
+    write, heartbeat = _should_write(repo, loc_dt, towns_data, clients_data)
+    if write:
+        suffix = ' (unchanged, hourly heartbeat)' if heartbeat else ''
+        repo.create_file(f"{filepath_towns}", message=f"New export created {loc_dt.strftime(date_format)} Towns{suffix}", content=json.dumps(towns_data), branch="main")
+        repo.create_file(f"{filepath_clients}", message=f"New export created {loc_dt.strftime(date_format)} Clients{suffix}", content=json.dumps(clients_data), branch="main")
