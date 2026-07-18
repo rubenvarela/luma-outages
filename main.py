@@ -123,7 +123,7 @@ if token:
     # and the writes (create_file) - a transient GitHub error is now retried
     # before it either aborts the run or forces the pair-write path to
     # backfill a missing file.
-    g = github.Github(token, lazy=True, retry=github.GithubRetry(backoff_factor=1))
+    g = github.Github(auth=github.Auth.Token(token), lazy=True, retry=github.GithubRetry(backoff_factor=1))
     repo = g.get_repo("rubenvarela/luma-outages-data")
 
     write, heartbeat = _should_write(repo, loc_dt, towns_data, clients_data)
