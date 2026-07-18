@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "requests",
     "pygithub",
+    "python-dotenv",
     "tzdata; sys_platform == 'win32'",
 ]
 

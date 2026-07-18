@@ -5,6 +5,11 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import github #pygithub
 import os
+from dotenv import load_dotenv
+
+# Fill in any of ghtoken/save_to_disk/save_to_github not already set in the
+# environment (e.g. by GitHub Actions) from a local `env` file, if present.
+load_dotenv('env')
 
 with open('towns.json') as fd:
     towns = json.load(fd)
@@ -95,12 +100,7 @@ def _should_write(repo, loc_dt, towns_data, clients_data):
 
 if os.environ.get('save_to_github') == '1':
     # Now we write it to GitHub
-    token = os.environ.get('ghtoken')
-    if not token:
-        if Path('env').exists():
-            with open('env') as fd:
-                token = fd.readline().split('=')[1][1:-2] # split on =, remove quotes with slicing
-    g = github.Github(token)
+    g = github.Github(os.environ.get('ghtoken'))
     repo = g.get_repo("rubenvarela/luma-outages-data")
 
     write, heartbeat = _should_write(repo, loc_dt, towns_data, clients_data)
