@@ -7,8 +7,8 @@ import github #pygithub
 import os
 from dotenv import load_dotenv
 
-# Fill in any of ghtoken/save_to_disk/save_to_github not already set in the
-# environment (e.g. by GitHub Actions) from a local `env` file, if present.
+# Fill in ghtoken from a local `env` file if it's not already set in the
+# environment (e.g. by GitHub Actions).
 load_dotenv('env')
 
 with open('towns.json') as fd:
@@ -46,15 +46,13 @@ filepath_clients = path.joinpath(f'{loc_dt.strftime(date_format)}--clients.json'
 towns_data = response_towns.json()
 clients_data = response_clients.json()
 
-# If we aren't running in GitHub, we save to disk too
-if not os.environ.get('GITHUB_ACTIONS') and os.environ.get('save_to_disk') == '1':
-    path.mkdir(parents=True, exist_ok=True)
+path.mkdir(parents=True, exist_ok=True)
 
-    with open(filepath_towns, 'w') as fd:
-        json.dump(towns_data, fd)
+with open(filepath_towns, 'w') as fd:
+    json.dump(towns_data, fd)
 
-    with open(filepath_clients, 'w') as fd:
-        json.dump(clients_data, fd)
+with open(filepath_clients, 'w') as fd:
+    json.dump(clients_data, fd)
 
 
 def _day_files(repo, dt, is_towns):
@@ -98,9 +96,10 @@ def _should_write(repo, loc_dt, towns_data, clients_data):
     return True, (towns_unchanged and clients_unchanged)
 
 
-if os.environ.get('save_to_github') == '1':
-    # Now we write it to GitHub
-    g = github.Github(os.environ.get('ghtoken'))
+token = os.environ.get('ghtoken')
+if token:
+    # Having a token is the signal to push - no separate on/off switch needed.
+    g = github.Github(token)
     repo = g.get_repo("rubenvarela/luma-outages-data")
 
     write, heartbeat = _should_write(repo, loc_dt, towns_data, clients_data)
