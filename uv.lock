@@ -256,7 +256,7 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "requests" },
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
+    { name = "tzdata" },
 ]
 
 [package.metadata]
@@ -264,7 +264,7 @@ requires-dist = [
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "requests" },
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
+    { name = "tzdata" },
 ]
 
 [[package]]

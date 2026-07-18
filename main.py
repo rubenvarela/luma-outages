@@ -68,6 +68,13 @@ def _day_files(repo, dt, kind):
         contents = repo.get_contents(_day_path(dt))
     except github.UnknownObjectException:
         return []
+    except github.GithubException as e:
+        # A day directory not existing yet is normal; anything else (rate
+        # limiting, a transient 5xx) isn't. Don't let a flaky read abort the
+        # run - fall back to "no prior snapshot", which just means we'll
+        # write instead of skip, and log it so it's visible in run logs.
+        print(f"Warning: could not list {_day_path(dt)} for {kind} ({e}); treating as no prior snapshot")
+        return []
     if kind == 'towns':
         matches = [c for c in contents if c.name.endswith('.json') and not c.name.endswith(CLIENTS_SUFFIX)]
     else:
