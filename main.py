@@ -119,7 +119,11 @@ def _should_write(repo, loc_dt, towns_data, clients_data):
 token = os.environ.get('ghtoken')
 if token:
     # Having a token is the signal to push - no separate on/off switch needed.
-    g = github.Github(token, lazy=True)
+    # Retries with backoff cover both the reads (get_contents, in _day_files)
+    # and the writes (create_file) - a transient GitHub error is now retried
+    # before it either aborts the run or forces the pair-write path to
+    # backfill a missing file.
+    g = github.Github(token, lazy=True, retry=github.GithubRetry(backoff_factor=1))
     repo = g.get_repo("rubenvarela/luma-outages-data")
 
     write, heartbeat = _should_write(repo, loc_dt, towns_data, clients_data)
