@@ -2,3 +2,6 @@
 venv
 .venv
 env
+
+# scraped output written by main.py when save_to_disk is set
+/[0-9][0-9][0-9][0-9]/
